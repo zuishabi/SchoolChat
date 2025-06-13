@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>主界面 - 网上校友通讯系统</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f9f9f9;
+        }
+        .navbar {
+            background-color: #2c3e50;
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-radius: 6px;
+            margin-bottom: 30px;
+        }
+        .navbar .nav-title {
+            color: #fff;
+            font-size: 1.5em;
+            font-weight: bold;
+        }
+        .navbar .nav-links a {
+            color: #fff;
+            text-decoration: none;
+            margin-left: 20px;
+            font-size: 1em;
+        }
+        .navbar .nav-links a:hover {
+            text-decoration: underline;
+        }
+        .system-desc {
+            text-align: center;
+            color: #555;
+            margin-bottom: 30px;
+        }
+        .search-section {
+            background: #fff;
+            padding: 20px;
+            border-radius: 6px;
+            margin-bottom: 30px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+        }
+        .search-section label {
+            font-weight: bold;
+        }
+        .search-section input[type="number"] {
+            width: 120px;
+            padding: 6px;
+            margin-right: 10px;
+        }
+        .search-section button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 8px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .search-section button:hover {
+            background-color: #45a049;
+        }
+        .class-list, .joined-classes {
+            background: #fff;
+            padding: 20px;
+            border-radius: 6px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+            margin-bottom: 20px;
+        }
+        .class-list ul, .joined-classes ul {
+            list-style: none;
+            padding: 0;
+        }
+        .class-list li, .joined-classes li {
+            padding: 8px 0;
+            border-bottom: 1px solid #eee;
+        }
+        .class-list li:last-child, .joined-classes li:last-child {
+            border-bottom: none;
+        }
+        .error {
+            color: red;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="navbar">
+        <div class="nav-title">网上校友通讯系统</div>
+        <div class="nav-links">
+            <a href="/userInfo">个人主页</a>
+            <a href="/logout">退出登录</a>
+        </div>
+    </div>
+    <div class="system-desc">欢迎来到校友通讯系统主界面，您可以通过毕业年份查找班级，并查看自己已加入的班级。</div>
+    
+    <div class="search-section">
+        <form id="searchForm">
+            <label for="searchYear">按毕业年份查找班级：</label>
+            <input type="number" id="searchYear" name="searchYear" min="1900" max="2099" placeholder="如：2024" required>
+            <button type="submit">搜索</button>
+        </form>
+        <div id="searchError" class="error"></div>
+        <div class="class-list" id="classList" style="display:none;">
+            <h3>搜索结果：</h3>
+            <ul id="classResult"></ul>
+        </div>
+    </div>
+   <div class="search-section">
+        <form id="createClassForm">
+            <label for="className">创建班级：</label>
+            <input type="text" id="className" name="className" placeholder="班级名称" required style="width:60%;margin-bottom:10px;">
+            <br>
+            <textarea id="classDescription" name="classDescription" placeholder="班级描述" required style="width:95%;height:60px;resize:vertical;margin-top:8px;"></textarea>
+            <br>
+            <button type="submit" style="margin-top:8px;">创建</button>
+        </form>
+        <div id="createClassError" class="error"></div>
+        <div id="createClassSuccess" style="color:green;margin-top:10px;"></div>
+    </div>
+    <div class="joined-classes">
+        <h3>我已加入的班级</h3>
+        <div id="classInfoBox">
+            <div id="notInClass" style="color:#888;">您还没有加入任何班级</div>
+            <div id="inClass" style="display:none;">
+                <div style="border:1.5px solid #b3c6e0; border-radius:12px; background:linear-gradient(135deg,#f5f7fa 60%,#eaf1fb 100%); box-shadow:0 2px 8px rgba(44,62,80,0.06); padding:22px 26px; margin-top:10px;">
+                    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+                        <div style="font-size:1.35em;font-weight:bold;color:#2c3e50;letter-spacing:1px;">
+                            <span id="classNameShow"></span>
+                        </div>
+                        <div>
+                            <button id="manageClassBtn" style="background:#1976d2;color:#fff;border:none;border-radius:6px;padding:6px 16px;cursor:pointer;margin-right:10px;">管理班级</button>
+                            <button id="quitClassBtn" style="background:#e53935;color:#fff;border:none;border-radius:6px;padding:6px 16px;cursor:pointer;">退出班级</button>
+                        </div>
+                    </div>
+                    <div style="background:rgba(76,175,80,0.08);border-radius:8px;padding:12px 16px;margin-bottom:14px;color:#388e3c;font-size:1.05em;line-height:1.7;">
+                        <span id="classDescShow"></span>
+                    </div>
+                    <div style="display:flex;gap:40px;align-items:center;margin-bottom:16px;">
+                        <div style="color:#607d8b;"><b>毕业年份：</b><span id="classGraduateShow"></span></div>
+                    </div>
+                    <div id="manageClassError" class="error" style="margin-bottom:10px;"></div>
+                    <div id="quitClassError" class="error" style="margin-bottom:10px;"></div>
+                    <div style="margin-top:10px;">
+                        <b style="color:#2c3e50;">班级成员列表：</b>
+                        <ul id="classMemberList" style="list-style:none;padding:0;margin:10px 0 0 0;">
+                            <!-- 成员列表由JS填充 -->
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 搜索班级功能（需后端API支持）
+        document.getElementById('searchForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const year = document.getElementById('searchYear').value;
+            const currentYear = new Date().getFullYear();
+            if (year < 1900 || year > currentYear) {
+                document.getElementById('searchError').textContent = '请输入有效的毕业年份（1900-' + currentYear + '）';
+                return;
+            }
+            document.getElementById('searchError').textContent = '';
+            // 假设后端API为 /api/classes?year=xxxx
+            try {
+                const res = await fetch('/api/classes?year=' + year);
+                if (res.ok) {
+                    const data = await res.json();
+                    const classResult = document.getElementById('classResult');
+                    classResult.innerHTML = '';
+                    if (data.length === 0) {
+                        classResult.innerHTML = '<li>未找到相关班级</li>';
+                    } else {
+                        data.forEach(cls => {
+                            classResult.innerHTML += `<li>${cls.name} <button onclick="joinClass('${cls.id}')">加入</button></li>`;
+                        });
+                    }
+                    document.getElementById('classList').style.display = 'block';
+                } else {
+                    document.getElementById('classResult').innerHTML = '<li>搜索失败，请重试</li>';
+                    document.getElementById('classList').style.display = 'block';
+                }
+            } catch {
+                document.getElementById('classResult').innerHTML = '<li>网络错误，请重试</li>';
+                document.getElementById('classList').style.display = 'block';
+            }
+        });
+
+        // 加入班级功能（需后端API支持）
+        async function joinClass(classId) {
+            try {
+                const res = await fetch('/api/joinClass', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({class_id: classId})
+                });
+                if (res.ok) {
+                    alert('加入成功！');
+                    // 可选：刷新已加入班级列表
+                    location.reload();
+                } else {
+                    alert('加入失败，请重试');
+                }
+            } catch {
+                alert('网络错误，请重试');
+            }
+        }
+        document.getElementById('createClassForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const name = document.getElementById('className').value.trim();
+            const desc = document.getElementById('classDescription').value.trim();
+            if (!name || !desc) {
+                document.getElementById('createClassError').textContent = '班级名称和描述不能为空';
+                return;
+            }
+            document.getElementById('createClassError').textContent = '';
+            document.getElementById('createClassSuccess').textContent = '';
+            try {
+                // 假设后端接口为 GET /createClass?class_name=xxx&class_description=xxx
+                const params = new URLSearchParams({
+                    class_name: name,
+                    class_description: desc
+                });
+                const res = await fetch('/createClass?' + params, { method: 'GET' });
+                if (res.ok) {
+                    document.getElementById('createClassSuccess').textContent = '创建成功！';
+                    setTimeout(() => location.reload(), 1000);
+                } else {
+                    const errorText = await res.text(); // 读取后端返回的错误字符串
+                    document.getElementById('createClassError').textContent = errorText;
+                }
+            } catch {
+                document.getElementById('createClassError').textContent = '网络错误，请重试';
+            }
+        });
+
+        document.addEventListener('DOMContentLoaded', async function() {
+            try {
+                const res = await fetch('/getClass');
+                if (res.ok) {
+                    const data = await res.json();
+                    document.getElementById('notInClass').style.display = 'none';
+                    document.getElementById('inClass').style.display = '';
+                    document.getElementById('classNameShow').textContent = data.c_name;
+                    document.getElementById('classDescShow').textContent = data.c_description;
+                    document.getElementById('classGraduateShow').textContent = data.graduate_time;
+                    const cid = data.cid;
+
+                    // 获取班级成员列表
+                    fetch('/getClassMembers?cid=' + cid)
+                        .then(r => r.ok ? r.json() : Promise.reject())
+                        .then(memberData => {
+                            const list = document.getElementById('classMemberList');
+                            list.innerHTML = '';
+                            if (memberData.length === 0) {
+                                list.innerHTML = '<li style="color:#888;">暂无成员</li>';
+                            } else {
+                                memberData.forEach(user => {
+                                    const li = document.createElement('li');
+                                    li.style.display = 'flex';
+                                    li.style.alignItems = 'center';
+                                    li.style.marginBottom = '6px';
+                                    li.innerHTML = `
+                                        <span style="flex:1;color:#333;">${user.name} <span style="color:#bbb;font-size:0.95em;">(${user.id})</span></span>
+                                        <button onclick="window.location.href='/userInfo?uid=${user.id}'" style="margin-left:10px;background:#4caf50;color:#fff;border:none;border-radius:5px;padding:3px 10px;cursor:pointer;">个人主页</button>
+                                    `;
+                                    list.appendChild(li);
+                                });
+                            }
+                        })
+                        .catch(() => {
+                            document.getElementById('classMemberList').innerHTML = '<li style="color:#888;">获取成员失败</li>';
+                        });
+                    
+                    // 管理班级按钮事件
+                    document.getElementById('manageClassBtn').onclick = async function() {
+                        document.getElementById('manageClassError').textContent = '';
+                        try {
+                            const res = await fetch('/manageClass?cid=' + cid, {method: 'GET'});
+                            if (res.ok) {
+                                window.location.href = '/manageClassPage?cid=' + cid;
+                            } else {
+                                const err = await res.text();
+                                document.getElementById('manageClassError').textContent = err || '您不是管理员';
+                            }
+                        } catch {
+                            document.getElementById('manageClassError').textContent = '请求失败，请重试';
+                        }
+                    };
+                    
+                    // 退出班级按钮事件
+                    document.getElementById('quitClassBtn').onclick = async function() {
+                        document.getElementById('quitClassError').textContent = '';
+                        if (!confirm('确定要退出该班级吗？')) return;
+                        try {
+                            const res = await fetch('/quitClass?cid=' + cid, {method: 'GET'});
+                            if (res.ok) {
+                                alert('已成功退出班级！');
+                                location.reload();
+                            } else {
+                                const err = await res.text();
+                                alert(err || '退出失败');
+                                location.reload();
+                            }
+                        } catch {
+                            alert('请求失败，请重试');
+                            location.reload();
+                        }
+                    };
+                } else {
+                    document.getElementById('notInClass').style.display = '';
+                    document.getElementById('inClass').style.display = 'none';
+                }
+            } catch {
+                document.getElementById('notInClass').textContent = '获取班级信息失败';
+                document.getElementById('notInClass').style.display = '';
+                document.getElementById('inClass').style.display = 'none';
+            }
+        });
+    </script>
+</body>
+</html>

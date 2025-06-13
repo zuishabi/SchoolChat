@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>用户注册 - 网上校友通讯系统</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 500px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .system-title {
+            text-align: center;
+            font-size: 2em;
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: #2c3e50;
+        }
+        .system-desc {
+            text-align: center;
+            color: #555;
+            margin-bottom: 30px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+        }
+        input {
+            width: 100%;
+            padding: 8px;
+            box-sizing: border-box;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        .error {
+            color: red;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="system-title">网上校友通讯系统</div>
+    <div class="system-desc">欢迎注册校友通讯系统，方便校友间的联系与交流。</div>
+    <h1>用户注册</h1>
+    
+    <form id="registerForm">
+        <div class="form-group">
+            <label for="uid">学号:</label>
+            <input type="text" id="uid" name="uid" required>
+        </div>
+        <div class="form-group">
+            <label for="user_name">姓名:</label>
+            <input type="text" id="user_name" name="user_name" required>
+        </div>
+        <div class="form-group">
+            <label for="password">密码:</label>
+            <input type="password" id="password" name="password" required>
+        </div>
+        <div class="form-group">
+            <label for="graduate_time">毕业年份:</label>
+    <input type="number" id="graduate_time" name="graduate_time" required min="1900" max="2099" step="1" placeholder="如：2024">
+        </div>
+        <button type="submit">注册</button>
+    </form>
+    
+    <div id="errorMsg" class="error"></div>
+    
+    <p>已有账号？<a href="/">立即登录</a></p>
+    
+    <script>
+        document.getElementById('registerForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const formData = {
+                user_name: document.getElementById('user_name').value,
+                password: document.getElementById('password').value,
+                uid:document.getElementById('uid').value,
+                graduate_time:document.getElementById('graduate_time').value,
+            };
+            // 前端校验毕业年份
+            const graduateYear = parseInt(document.getElementById('graduate_time').value, 10);
+            const currentYear = new Date().getFullYear();
+            if (isNaN(graduateYear) || graduateYear < 1900 || graduateYear > currentYear) {
+                document.getElementById('errorMsg').textContent = '请输入有效的毕业年份（1900-' + currentYear + '）';
+                return;
+            }
+            try {
+                const response = await fetch('/register', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(formData)
+                });
+                
+                if (response.ok) {
+                    window.location.href = '/';
+                } else {
+                    const data = await response.json();
+                    document.getElementById('errorMsg').textContent = data.err || '注册失败';
+                }
+            } catch (error) {
+                document.getElementById('errorMsg').textContent = '网络错误，请重试';
+            }
+        });
+    </script>
+</body>
+</html>
