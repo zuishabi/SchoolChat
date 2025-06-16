@@ -7,6 +7,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 	"net/http"
+	"strconv"
 )
 
 // CreateClass 创建一个班级
@@ -104,4 +105,69 @@ func GetClassMembers(c *gin.Context) {
 		members[i].Name = v.UserName
 	}
 	c.JSON(http.StatusOK, members)
+}
+
+type ClassList struct {
+	Name        string `json:"name"`
+	ID          uint32 `json:"id"`
+	Description string `json:"description"`
+}
+
+func SearchClass(c *gin.Context) {
+	session := sessions.Default(c)
+	if session.Get("uid") == nil {
+		c.Redirect(http.StatusSeeOther, "/")
+		return
+	}
+	graduateTime := c.Query("graduate_time")
+	classes := make([]database.ClassInfo, 0)
+	database.Db.Where("graduate_time = ?", graduateTime).Find(&classes)
+	res := make([]ClassList, len(classes))
+	for i, v := range classes {
+		res[i].Name = v.CName
+		res[i].ID = v.CID
+		res[i].Description = v.CDescription
+	}
+	c.JSON(http.StatusOK, &res)
+}
+
+func AddClass(c *gin.Context) {
+	session := sessions.Default(c)
+	if session.Get("uid") == nil {
+		c.Redirect(http.StatusSeeOther, "/")
+		return
+	}
+	uid := session.Get("uid").(string)
+	userName := session.Get("user_name").(string)
+	// 首先检查当前用户是否已加入班级
+	u := database.ClassUser{}
+	if err := database.Db.Where("uid = ?", uid).First(&u).Error; err == nil {
+		c.String(http.StatusForbidden, "您已加入班级，请先退出当前班级")
+		return
+	}
+	// 将请求加入班级的信息写入表中
+	cid, _ := strconv.Atoi(c.Query("cid"))
+	req := database.EnterRequest{
+		CID:      uint32(cid),
+		UID:      uid,
+		UserName: userName,
+	}
+	if err := database.Db.Create(&req).Error; err != nil {
+		c.String(http.StatusForbidden, "加入班级失败")
+		return
+	}
+	c.String(http.StatusOK, "成功发送请求")
+	return
+}
+
+// QuitClass 退出班级
+func QuitClass(c *gin.Context) {
+	session := sessions.Default(c)
+	if session.Get("uid") == nil {
+		c.Redirect(http.StatusSeeOther, "/")
+		return
+	}
+	uid := session.Get("uid").(string)
+	database.Db.Where("uid = ?", uid).Delete(&database.ClassUser{})
+	c.String(http.StatusOK, "")
 }

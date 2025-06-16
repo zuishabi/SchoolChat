@@ -2,6 +2,7 @@ package routers
 
 import (
 	"SchoolChat/database"
+	"fmt"
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
 	"net/http"
@@ -15,6 +16,7 @@ type LoginInfo struct {
 func Login(c *gin.Context) {
 	s := sessions.Default(c)
 	if s.Get("uid") != nil {
+		fmt.Println("get session ", s.Get("uid").(string))
 		c.Redirect(http.StatusSeeOther, "/main")
 		return
 	}

@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>班级管理</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; background: #f9f9f9; }
+        h2 { color: #1976d2; }
+        .section { background: #fff; border-radius: 8px; box-shadow: 0 2px 8px rgba(44,62,80,0.06); padding: 20px; margin-bottom: 24px; }
+        .member-list, .request-list { list-style: none; padding: 0; }
+        .member-list li, .request-list li { display: flex; align-items: center; border-bottom: 1px solid #eee; padding: 10px 0; }
+        .member-list li:last-child, .request-list li:last-child { border-bottom: none; }
+        .member-info { flex: 1; }
+        .btn { margin-left: 10px; padding: 4px 12px; border: none; border-radius: 5px; cursor: pointer; }
+        .btn-profile { background: #4caf50; color: #fff; }
+        .btn-remove { background: #e53935; color: #fff; }
+        .btn-approve { background: #1976d2; color: #fff; }
+        .btn-reject { background: #bdbdbd; color: #333; }
+        .btn-disband { background: #d32f2f; color: #fff; margin-top: 20px; }
+        .error { color: red; margin-top: 10px; }
+        .success { color: green; margin-top: 10px; }
+    </style>
+</head>
+<body>
+    <h2>班级管理</h2>
+    <div class="section">
+        <h3>班级成员</h3>
+        <ul id="memberList" class="member-list"></ul>
+        <div id="memberError" class="error"></div>
+    </div>
+    <div class="section">
+        <h3>加入请求</h3>
+        <ul id="requestList" class="request-list"></ul>
+        <div id="requestError" class="error"></div>
+    </div>
+    <button id="disbandBtn" class="btn btn-disband">解散班级</button>
+    <button id="backHomeBtn" class="btn" style="background:#607d8b;color:#fff;margin-left:16px;">返回主页面</button>
+    <div id="disbandError" class="error"></div>
+    <div id="disbandSuccess" class="success"></div>
+
+    <script>
+        // 获取cid参数
+        function getCid() {
+            const params = new URLSearchParams(window.location.search);
+            return params.get('cid');
+        }
+        const cid = getCid();
+
+        // 加载班级成员
+        async function loadMembers() {
+            try {
+                const res = await fetch(`/getClassMembers?cid=${cid}`);
+                if (!res.ok) throw new Error('获取成员失败');
+                const members = await res.json();
+                const list = document.getElementById('memberList');
+                list.innerHTML = '';
+                if (members.length === 0) {
+                    list.innerHTML = '<li style="color:#888;">暂无成员</li>';
+                } else {
+                    members.forEach(user => {
+                        const li = document.createElement('li');
+                        li.innerHTML = `
+                            <span class="member-info">${user.name} <span style="color:#bbb;font-size:0.95em;">(${user.id})</span></span>
+                            <button class="btn btn-profile" onclick="window.location.href='/userInfo?uid=${user.id}'">个人主页</button>
+                            <button class="btn btn-remove" onclick="kickMember('${user.id}')">踢出班级</button>
+                        `;
+                        list.appendChild(li);
+                    });
+                }
+            } catch (e) {
+                document.getElementById('memberError').textContent = e.message;
+            }
+        }
+
+        // 踢出班级
+        async function kickMember(uid) {
+            if (!confirm('确定要将该成员移出班级吗？')) return;
+            try {
+                const res = await fetch(`/kickMember?cid=${cid}&uid=${uid}`, { method: 'GET' });
+                if (res.ok) {
+                    await loadMembers();
+                } else {
+                    const err = await res.text();
+                    alert(err || '操作失败');
+                }
+            } catch {
+                alert('请求失败，请重试');
+            }
+        }
+
+        // 加载加入请求
+        async function loadRequests() {
+            try {
+                const res = await fetch(`/getEnterRequest?cid=${cid}`);
+                if (!res.ok) throw new Error('获取请求失败');
+                const requests = await res.json();
+                const list = document.getElementById('requestList');
+                list.innerHTML = '';
+                if (requests.length === 0) {
+                    list.innerHTML = '<li style="color:#888;">暂无请求</li>';
+                } else {
+                    requests.forEach(user => {
+                        const li = document.createElement('li');
+                        li.innerHTML = `
+                            <span class="member-info">${user.name} <span style="color:#bbb;font-size:0.95em;">(${user.id})</span></span>
+                            <button class="btn btn-approve" onclick="approveRequest('${user.id}')">同意</button>
+                            <button class="btn btn-reject" onclick="rejectRequest('${user.id}')">拒绝</button>
+                        `;
+                        list.appendChild(li);
+                    });
+                }
+            } catch (e) {
+                document.getElementById('requestError').textContent = e.message;
+            }
+        }
+
+        // 同意加入请求
+        async function approveRequest(uid) {
+            try {
+                const res = await fetch(`/approveEnter?cid=${cid}&uid=${uid}`, { method: 'GET' });
+                if (res.ok) {
+                    await loadRequests();
+                    await loadMembers();
+                } else {
+                    const err = await res.text();
+                    alert(err || '操作失败');
+                }
+            } catch {
+                alert('请求失败，请重试');
+            }
+        }
+
+        // 拒绝加入请求
+        async function rejectRequest(uid) {
+            try {
+                const res = await fetch(`/rejectEnter?cid=${cid}&uid=${uid}`, { method: 'GET' });
+                if (res.ok) {
+                    await loadRequests();
+                } else {
+                    const err = await res.text();
+                    alert(err || '操作失败');
+                }
+            } catch {
+                alert('请求失败，请重试');
+            }
+        }
+
+        // 解散班级
+        document.getElementById('disbandBtn').onclick = async function() {
+            if (!confirm('确定要解散该班级吗？操作不可恢复！')) return;
+            document.getElementById('disbandError').textContent = '';
+            document.getElementById('disbandSuccess').textContent = '';
+            try {
+                const res = await fetch(`/deleteClass?cid=${cid}`, { method: 'GET' });
+                if (res.ok) {
+                    document.getElementById('disbandSuccess').textContent = '班级已解散！';
+                    setTimeout(() => { window.location.href = '/'; }, 1500);
+                } else {
+                    const err = await res.text();
+                    document.getElementById('disbandError').textContent = err || '解散失败';
+                }
+            } catch {
+                document.getElementById('disbandError').textContent = '请求失败，请重试';
+            }
+        };
+        document.getElementById('backHomeBtn').onclick = function() {
+            window.location.href = '/';
+        };
+        // 初始化
+        loadMembers();
+        loadRequests();
+    </script>
+</body>
+</html>

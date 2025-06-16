@@ -1,0 +1,16 @@
+name:
+    SchoolEnv
+services:
+    mysql:
+        restart: always
+        container_name: mysql-school
+        image: mysql
+        networks:
+            - SchoolEnv
+        ports:
+            - "3309:3306"
+        environment:
+            - MYSQL_ROOT_PASSWORD=861214959
+
+networks:
+  SchoolEnv:

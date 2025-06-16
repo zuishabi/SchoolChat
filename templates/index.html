@@ -95,7 +95,7 @@
                 });
                 
                 if (response.ok) {
-                    window.location.href = '/userInfo';
+                    window.location.href = '/main';
                 } else {
                     const data = await response.json();
                     document.getElementById('errorMsg').textContent = data.err || '登录失败';

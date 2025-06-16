@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=900">
+    <title>用户主页 - 网上校友通讯系统</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f9f9f9;
+            margin: 0;
+            padding: 0;
+        }
+        .main-wrapper {
+            max-width: 800px;
+            margin: 40px auto 0 auto;
+            background: #fff;
+            border-radius: 10px;
+            box-shadow: 0 2px 12px rgba(44,62,80,0.08);
+            display: flex;
+            min-height: 540px;
+        }
+        .sidebar {
+            width: 180px;
+            background: #2c3e50;
+            border-radius: 10px 0 0 10px;
+            color: #fff;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding-top: 38px;
+        }
+        .sidebar h2 {
+            font-size: 1.15em;
+            margin-bottom: 36px;
+            letter-spacing: 1px;
+        }
+        .nav-list {
+            list-style: none;
+            padding: 0;
+            width: 100%;
+        }
+        .nav-list li {
+            padding: 16px 0 16px 0;
+            text-align: center;
+            cursor: pointer;
+            font-size: 1.08em;
+            transition: background 0.2s;
+            border-left: 4px solid transparent;
+        }
+        .nav-list li.active, .nav-list li:hover {
+            background: rgba(255,255,255,0.13);
+            font-weight: bold;
+            border-left: 4px solid #4CAF50;
+        }
+        .content-area {
+            flex: 1;
+            padding: 44px 48px 44px 48px;
+            background: #fff;
+            border-radius: 0 10px 10px 0;
+            min-height: 540px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+        .section {
+            display: none;
+            min-height: 320px;
+        }
+        .section.active {
+            display: block;
+        }
+        .info-row {
+            margin-bottom: 22px;
+        }
+        .info-label {
+            display: inline-block;
+            width: 90px;
+            color: #1976d2;
+            font-weight: bold;
+        }
+        .info-value {
+            color: #333;
+        }
+        .edit-btn, .save-btn, .back-btn {
+            background: #1976d2;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            padding: 7px 22px;
+            margin-top: 18px;
+            cursor: pointer;
+            font-size: 1em;
+        }
+        .save-btn {
+            background: #388e3c;
+            margin-left: 10px;
+        }
+        .readonly input, .readonly textarea {
+            background: #f5f5f5;
+            border: none;
+        }
+        .msg-board {
+            margin-top: 10px;
+        }
+        .msg-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        .msg-list li {
+            background: #f1f8e9;
+            border-radius: 6px;
+            margin-bottom: 12px;
+            padding: 12px 16px;
+            color: #333;
+            box-shadow: 0 1px 3px rgba(44,62,80,0.04);
+        }
+        .msg-meta {
+            color: #888;
+            font-size: 0.96em;
+            margin-bottom: 4px;
+        }
+        .msg-form textarea {
+            width: 100%;
+            height: 60px;
+            border-radius: 6px;
+            border: 1px solid #b3c6e0;
+            padding: 8px;
+            font-size: 1em;
+            resize: vertical;
+        }
+        .msg-form button {
+            margin-top: 8px;
+            background: #1976d2;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            padding: 6px 18px;
+            cursor: pointer;
+        }
+        .back-btn {
+            background: #2c3e50;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            padding: 7px 22px;
+            margin: 32px auto 0 auto;
+            cursor: pointer;
+            font-size: 1em;
+            display: block;
+            width: 80%;
+        }
+        .success { color: #388e3c; margin-top: 10px; }
+        .error { color: #e53935; margin-top: 10px; }
+        @media (max-width: 900px) {
+            .main-wrapper { flex-direction: column; min-width: 320px; }
+            .sidebar { border-radius: 10px 10px 0 0; width: 100%; flex-direction: row; justify-content: center; padding: 18px 0 0 0;}
+            .nav-list { display: flex; flex-direction: row; width: auto;}
+            .nav-list li { padding: 12px 18px; border-left: none; border-bottom: 4px solid transparent;}
+            .nav-list li.active, .nav-list li:hover { border-left: none; border-bottom: 4px solid #4CAF50;}
+            .content-area { border-radius: 0 0 10px 10px; padding: 24px 10px;}
+            .back-btn { position: static; margin-bottom: 16px;}
+        }
+    </style>
+</head>
+<body>
+    <div class="main-wrapper">
+        <div class="sidebar">
+            <h2>个人中心</h2>
+            <ul class="nav-list">
+                <li class="active" data-section="infoSection">基本信息</li>
+                <li data-section="msgSection">留言板</li>
+                <li data-section="editSection" id="editNav" style="display:none;">修改信息</li>
+            </ul>
+            <button class="back-btn" onclick="window.location.href='/main'">返回主页面</button>
+        </div>
+        <div class="content-area">
+            <!-- 基本信息 -->
+            <div id="infoSection" class="section active">
+                <h3 style="color:#1976d2;">基本信息</h3>
+                <div class="info-row"><span class="info-label">用户名：</span><span class="info-value" id="infoName"></span></div>
+                <div class="info-row"><span class="info-label">学号：</span><span class="info-value" id="infoStudentId"></span></div>
+                <div class="info-row"><span class="info-label">毕业时间：</span><span class="info-value" id="infoGraduateTime"></span></div>
+                <div class="info-row"><span class="info-label">个人简介：</span><span class="info-value" id="infoDesc"></span></div>
+                <button id="toEditBtn" class="edit-btn" style="display:none;">修改信息</button>
+            </div>
+            <!-- 留言板 -->
+            <div id="msgSection" class="section">
+                <h3 style="color:#1976d2;">留言板</h3>
+                <form class="msg-form" id="msgForm">
+                    <textarea id="msgContent" placeholder="写下你的留言..." required></textarea>
+                    <button type="submit">留言</button>
+                </form>
+                <div id="msgError" class="error"></div>
+                <ul class="msg-list" id="msgList"></ul>
+            </div>
+            <!-- 修改信息 -->
+            <div id="editSection" class="section">
+                <h3 style="color:#1976d2;">修改个人信息</h3>
+                <form id="editForm">
+                    <div class="info-row">
+                        <label class="info-label" for="editName">用户名：</label>
+                        <input type="text" id="editName" required>
+                    </div>
+                    <div class="info-row">
+                        <label class="info-label" for="editGraduateTime">毕业时间：</label>
+                        <input type="number" id="editGraduateTime" min="1900" max="2100" required>
+                    </div>
+                    <div class="info-row">
+                        <label class="info-label" for="editDesc">个人简介：</label>
+                        <textarea id="editDesc" rows="4"></textarea>
+                    </div>
+                    <button type="submit" class="save-btn">保存</button>
+                    <span id="editMsg" class="success"></span>
+                </form>
+            </div>
+        </div>
+    </div>
+<script>
+    // 导航切换
+    document.querySelectorAll('.nav-list li').forEach(item => {
+        item.onclick = function() {
+            document.querySelectorAll('.nav-list li').forEach(li => li.classList.remove('active'));
+            this.classList.add('active');
+            document.querySelectorAll('.section').forEach(sec => sec.classList.remove('active'));
+            document.getElementById(this.dataset.section).classList.add('active');
+        }
+    });
+
+    // 获取url参数
+    function getUid() {
+        const params = new URLSearchParams(window.location.search);
+        return params.get('uid');
+    }
+    const pageUid = getUid();
+
+    // 加载用户信息
+    async function loadUserInfo() {
+        let url = '/getUserInfo';
+        if (pageUid) {
+            url += '?uid=' + encodeURIComponent(pageUid);
+        }
+        const res = await fetch(url);
+        if (res.ok) {
+            const data = await res.json();
+            document.getElementById('infoName').textContent = data.name || '';
+            document.getElementById('infoStudentId').textContent = data.student_id || '';
+            document.getElementById('infoGraduateTime').textContent = data.graduate_time || '';
+            document.getElementById('infoDesc').textContent = data.description || '';
+            document.getElementById('editName').value = data.name || '';
+            document.getElementById('editGraduateTime').value = data.graduate_time || '';
+            document.getElementById('editDesc').value = data.description || '';
+            // 只有本人才能编辑
+            if (data.current_uid === data.student_id) {
+                document.getElementById('editNav').style.display = '';
+                document.getElementById('toEditBtn').style.display = '';
+                document.getElementById('toEditBtn').onclick = function() {
+                    document.querySelectorAll('.nav-list li').forEach(li => li.classList.remove('active'));
+                    document.getElementById('editNav').classList.add('active');
+                    document.querySelectorAll('.section').forEach(sec => sec.classList.remove('active'));
+                    document.getElementById('editSection').classList.add('active');
+                }
+            }
+        }
+    }
+
+    // 修改信息提交
+    document.getElementById('editForm').onsubmit = async function(e) {
+        e.preventDefault();
+        const name = document.getElementById('editName').value.trim();
+        const graduateTime = document.getElementById('editGraduateTime').value.trim();
+        const desc = document.getElementById('editDesc').value.trim();
+        const res = await fetch('/updateUserInfo', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ name, graduate_time: graduateTime, description: desc })
+        });
+        if (res.ok) {
+            document.getElementById('editMsg').textContent = '保存成功！';
+            await loadUserInfo();
+        } else {
+            document.getElementById('editMsg').textContent = '保存失败，请重试';
+        }
+    };
+    // 留言板加载与提交
+    let currentPage = 1;
+    const pageSize = 10;
+
+    // 加载留言（带分页）
+    async function loadMessages(page = 1) {
+        const res = await fetch(`/getMessages?uid=${encodeURIComponent(pageUid)}&page=${page}`);
+        const list = document.getElementById('msgList');
+        list.innerHTML = '';
+        if (res.ok) {
+            const data = await res.json();
+            const msgs = data.messages || [];
+            const totalPages = data.total_pages || 1;
+            if (msgs.length === 0) {
+                list.innerHTML = '<li style="color:#888;">暂无留言</li>';
+            } else {
+                msgs.forEach(msg => {
+                    const li = document.createElement('li');
+                    li.innerHTML = `
+                        <div class="msg-meta">${msg.from_name} 于 ${msg.time}</div>
+                        <div>${msg.content}</div>
+                    `;
+                    list.appendChild(li);
+                });
+            }
+            renderPagination(totalPages, page);
+        } else {
+            list.innerHTML = '<li style="color:#888;">留言加载失败</li>';
+        }
+    }
+
+    // 渲染分页按钮
+    function renderPagination(totalPages, current) {
+        let html = '';
+        if (totalPages > 1) {
+            html += `<div style="margin:18px 0 0 0;text-align:center;">`;
+            if (current > 1) {
+                html += `<button onclick="gotoPage(${current-1})" style="margin-right:10px;">上一页</button>`;
+            }
+            html += `第 ${current} / ${totalPages} 页`;
+            if (current < totalPages) {
+                html += `<button onclick="gotoPage(${current+1})" style="margin-left:10px;">下一页</button>`;
+            }
+            html += `</div>`;
+        }
+        // 插入到留言列表下方
+        let pagin = document.getElementById('msgPagination');
+        if (!pagin) {
+            pagin = document.createElement('div');
+            pagin.id = 'msgPagination';
+            document.getElementById('msgList').after(pagin);
+        }
+        pagin.innerHTML = html;
+    }
+
+    // 翻页函数
+    function gotoPage(page) {
+        currentPage = page;
+        loadMessages(page);
+    }
+
+    // 留言提交后刷新第一页
+    document.getElementById('msgForm').onsubmit = async function(e) {
+        e.preventDefault();
+        const content = document.getElementById('msgContent').value.trim();
+        if (!content) return;
+        const res = await fetch('/leaveMessage', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ uid: pageUid, content })
+        });
+        if (res.ok) {
+            document.getElementById('msgContent').value = '';
+            document.getElementById('msgError').textContent = '';
+            currentPage = 1;
+            await loadMessages(1);
+        } else {
+            document.getElementById('msgError').textContent = '留言失败，请重试';
+        }
+    };
+    // 初始化加载第一页
+    loadMessages(1);
+    // 初始化
+    loadUserInfo();
+</script>
+</body>
+</html>
